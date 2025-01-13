@@ -1,4 +1,4 @@
-name: Build Spigot and Create ZIP
+name: Build Spigot
 
 on:
   push:
@@ -12,12 +12,12 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Install Java and dependencies
       run: |
         sudo apt update
-        sudo apt install -y git openjdk-17-jdk maven zip
+        sudo apt install -y git openjdk-17-jdk maven
 
     - name: Download BuildTools.jar
       run: |
@@ -27,24 +27,9 @@ jobs:
       run: |
         java -jar BuildTools.jar --rev 1.20.1
 
-    - name: Create ZIP archive
+    - name: Commit and push changes
       run: |
-        mkdir -p dist
-        zip -r dist/Spigot-1.20.1.zip . -x ".git/*" -x "dist/*"
-
-    - name: Clean up unnecessary files
-      run: |
-        find . -mindepth 1 -maxdepth 1 ! -name 'dist' -exec rm -rf {} +
-
-    - name: Configure Git
-      run: |
-        git config --global user.name "GitHub Actions"
-        git config --global user.email "actions@github.com"
-
-    - name: Commit and push ZIP archive
-      run: |
-        git add dist/Spigot-1.20.1.zip
-        git commit -m "Added Spigot-1.20.1.zip"
-        git push
-      env:
-        GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add .
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Updated Spigot build for 1.20.1" && git pull --rebase && git push)
