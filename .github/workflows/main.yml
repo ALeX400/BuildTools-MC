@@ -1,4 +1,4 @@
-name: Build Spigot
+name: Build Spigot and Create ZIP
 
 on:
   push:
@@ -16,20 +16,25 @@ jobs:
 
     - name: Install Java and dependencies
       run: |
-        sudo apt update
-        sudo apt install -y git openjdk-17-jdk maven
-
-    - name: Download BuildTools.jar
-      run: |
-        curl -o BuildTools.jar https://hub.spigotmc.org/jenkins/job/BuildTools/lastSuccessfulBuild/artifact/target/BuildTools.jar
+        sudo apt update -qq
+        sudo apt install -y -qq git openjdk-17-jdk maven zip
 
     - name: Run BuildTools
       run: |
         java -jar BuildTools.jar --rev 1.20.1
 
-    - name: Commit and push changes
+    - name: Create ZIP archive
+      run: |
+        mkdir -p dist
+        zip -r -q dist/Spigot-1.20.1.zip . -x ".git/*" -x "dist/*" -x ".github/*" -x "BuildTools.jar"
+
+    - name: Cleanup repository
+      run: |
+        find . -mindepth 1 -maxdepth 1 ! -name "dist" ! -name ".git" -exec rm -rf {} +
+
+    - name: Commit and push ZIP archive
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add .
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Updated Spigot build for 1.20.1" && git pull --rebase && git push)
+        git add dist/Spigot-1.20.1.zip
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Added Spigot-1.20.1.zip" && git pull --rebase && git push)
