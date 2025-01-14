@@ -1,0 +1,35 @@
+name: Build Spigot Artifact
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Java and dependencies
+      run: |
+        sudo apt update -qq
+        sudo apt install -y -qq git openjdk-17-jdk maven zip
+
+    - name: Run BuildTools
+      run: |
+        java -jar BuildTools.jar --rev 1.20.1
+
+    - name: Create ZIP archive
+      run: |
+        mkdir -p dist
+        zip -r -q dist/Spigot-1.20.1.zip . -x ".git/*" -x "dist/*" -x ".github/*" -x "BuildTools.jar"
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: Spigot-1.20.1
+        path: dist/Spigot-1.20.1.zip
