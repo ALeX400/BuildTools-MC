@@ -13,6 +13,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Asigură că tot istoricul Git este disponibil pentru rebase
 
     - name: Install Java and dependencies
       run: |
@@ -32,9 +34,12 @@ jobs:
       run: |
         find . -mindepth 1 -maxdepth 1 ! -name "dist" ! -name ".git" -exec rm -rf {} +
 
-    - name: Commit and push ZIP archive
+    - name: Force sync with remote and push ZIP archive
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git add dist/Spigot-1.20.1.zip
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Added Spigot-1.20.1.zip" && git pull --rebase && git push)
+        git diff --quiet && git diff --staged --quiet || git commit -m "Added Spigot-1.20.1.zip"
+        git fetch origin
+        git reset --hard origin/main  # Sincronizează localul cu remote-ul
+        git push --force
